@@ -1,0 +1,22 @@
+{
+  "name": "tanzania-agri-prices-parser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "make-fixtures": "bun tests/fixtures/generate.ts",
+    "pdf-to-csv": "bun scripts/pdf-to-csv.ts"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^5.7.284"
+  },
+  "devDependencies": {
+    "pdf-lib": "^1.17.1",
+    "vitest": "^3.2.4"
+  }
+}

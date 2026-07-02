@@ -1,0 +1,32 @@
+{
+  "name": "tanzania-agri-prices",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "app",
+    "parser"
+  ],
+  "scripts": {
+    "dev": "bun run --cwd app dev",
+    "build": "bun run --cwd app build",
+    "preview": "bun run --cwd app preview",
+    "test": "bun run --cwd parser test",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.1",
+    "eslint-plugin-prettier": "^5.2.6",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^15.15.0",
+    "prettier": "^3.7.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.56.1"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}
