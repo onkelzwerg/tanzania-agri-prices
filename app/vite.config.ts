@@ -9,8 +9,14 @@ export default defineConfig({
     tailwindcss(),
     tsConfigPaths({ projects: ["./tsconfig.json"] }),
     tanstackStart({
+      // Static single-page app: the data comes from the data repo over
+      // jsDelivr at runtime, so there is no server. Prerender a shell as
+      // dist/client/index.html, served for every route and hydrated on the
+      // client (see public/_redirects for the SPA fallback). Deploy the static
+      // dist/client output to any static host (e.g. Cloudflare Pages).
+      spa: { enabled: true, prerender: { outputPath: "/index" } },
       // Redirect TanStack Start's bundled server entry to src/server.ts,
-      // our SSR error wrapper.
+      // our error wrapper (used while prerendering the shell).
       server: { entry: "server" },
       importProtection: {
         behavior: "error",
