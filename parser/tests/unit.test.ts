@@ -48,6 +48,13 @@ describe("extractWeek", () => {
     });
   });
 
+  it("handles a comma after the first month name (Apr/May 2026 bulletins)", () => {
+    expect(extractWeek("27 April, -01 May, 2026")).toEqual({
+      weekStart: "27.04.2026",
+      weekEnd: "01.05.2026",
+    });
+  });
+
   it("parses Swahili month names (mixed-language bulletins)", () => {
     expect(extractWeek("02-06 Juni, 2025")).toEqual({
       weekStart: "02.06.2025",
