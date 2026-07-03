@@ -79,8 +79,9 @@ export function extractWeek(text: string): WeekRange | null {
     }
   }
 
-  // Cross-month single-year: "04 May - 08 May, 2026"
-  const c = t.match(/(\d{1,2})\s+([A-Za-z]+)\s*[-–—to]+\s*(\d{1,2})\s+([A-Za-z]+),?\s+(\d{4})/);
+  // Cross-month single-year: "04 May - 08 May, 2026" (some bulletins also put a
+  // comma after the first month: "27 April, -01 May, 2026").
+  const c = t.match(/(\d{1,2})\s+([A-Za-z]+),?\s*[-–—to]+\s*(\d{1,2})\s+([A-Za-z]+),?\s+(\d{4})/);
   if (c) {
     const m1 = MONTHS[c[2].toLowerCase()];
     const m2 = MONTHS[c[4].toLowerCase()];
