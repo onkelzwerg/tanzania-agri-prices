@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 
@@ -52,6 +54,9 @@ function ChartPage() {
   const [selectedCrop, setSelectedCrop] = useState<CropKey>("beans");
   const [selectedRegions, setSelectedRegions] = useState<(string | null)[]>([null, null, null]);
   const [showNational, setShowNational] = useState(false);
+  // Shared date-range filter for both charts; ISO strings (yyyy-mm-dd), "" = unbounded.
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -63,9 +68,28 @@ function ChartPage() {
     })();
   }, []);
 
+  // Earliest/latest week in the dataset (ISO), used to bound the date inputs.
+  const [minDate, maxDate] = useMemo(() => {
+    let min = "";
+    let max = "";
+    for (const r of records) {
+      const d = isoDate(r.weekStart);
+      if (!min || d < min) min = d;
+      if (!max || d > max) max = d;
+    }
+    return [min, max];
+  }, [records]);
+
+  const inDateRange = useMemo(() => {
+    return (weekStart: string) => {
+      const d = isoDate(weekStart);
+      return (!dateFrom || d >= dateFrom) && (!dateTo || d <= dateTo);
+    };
+  }, [dateFrom, dateTo]);
+
   const data = useMemo(() => {
     return records
-      .filter((r) => r.region.toLowerCase() === "national average")
+      .filter((r) => r.region.toLowerCase() === "national average" && inDateRange(r.weekStart))
       .slice()
       .sort((a, b) => isoDate(a.weekStart).localeCompare(isoDate(b.weekStart)))
       .map((r) => ({
@@ -78,7 +102,7 @@ function ChartPage() {
         fingerMillet: r.fingerMillet,
         roundPotato: r.roundPotato,
       }));
-  }, [records]);
+  }, [records, inDateRange]);
 
   // Distinct mainland region names (excluding the national average row), sorted.
   const regions = useMemo(() => {
@@ -111,7 +135,9 @@ function ChartPage() {
       }
       m.set(r.region.toLowerCase(), r);
     }
-    const weeks = [...byWeek.keys()].sort((a, b) => isoDate(a).localeCompare(isoDate(b)));
+    const weeks = [...byWeek.keys()]
+      .filter(inDateRange)
+      .sort((a, b) => isoDate(a).localeCompare(isoDate(b)));
     return weeks.map((weekStart) => {
       const m = byWeek.get(weekStart)!;
       const row: Record<string, string | number | null> = { weekStart };
@@ -121,7 +147,7 @@ function ChartPage() {
       row[NATIONAL_KEY] = m.get("national average")?.[selectedCrop] ?? null;
       return row;
     });
-  }, [records, selectedRegions, selectedCrop]);
+  }, [records, selectedRegions, selectedCrop, inDateRange]);
 
   const activeRegions = selectedRegions
     .map((region, i) => ({ region, color: REGION_COLORS[i] }))
@@ -144,6 +170,46 @@ function ChartPage() {
     <div className="min-h-screen bg-background">
       <Navbar onExport={handleExport} />
       <main className="container mx-auto px-4 py-6 space-y-4">
+        {records.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 border rounded-lg p-3 bg-card">
+            <span className="text-sm font-medium text-foreground">Date range</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">From</span>
+              <Input
+                type="date"
+                className="w-40"
+                value={dateFrom}
+                min={minDate}
+                max={dateTo || maxDate}
+                onChange={(e) => setDateFrom(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">To</span>
+              <Input
+                type="date"
+                className="w-40"
+                value={dateTo}
+                min={dateFrom || minDate}
+                max={maxDate}
+                onChange={(e) => setDateTo(e.target.value)}
+              />
+            </div>
+            {(dateFrom || dateTo) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setDateFrom("");
+                  setDateTo("");
+                }}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
+        )}
+
         <div>
           <h2 className="text-xl font-bold text-foreground">National Average Trend</h2>
           <p className="text-sm text-muted-foreground">Weekly prices in TZS/kg</p>
@@ -151,7 +217,9 @@ function ChartPage() {
 
         {data.length === 0 ? (
           <div className="border rounded-lg p-12 text-center text-muted-foreground">
-            No national average data yet. Import PDFs to populate the chart.
+            {records.length === 0
+              ? "No national average data yet. Import PDFs to populate the chart."
+              : "No national average data in the selected date range."}
           </div>
         ) : (
           <div className="border rounded-lg p-4 bg-card">
@@ -273,6 +341,10 @@ function ChartPage() {
               {activeRegions.length === 0 && !showNational ? (
                 <div className="p-12 text-center text-muted-foreground">
                   Select at least one region to see the trend.
+                </div>
+              ) : regionalData.length === 0 ? (
+                <div className="p-12 text-center text-muted-foreground">
+                  No data in the selected date range.
                 </div>
               ) : (
                 <div className="w-full h-[500px]">
